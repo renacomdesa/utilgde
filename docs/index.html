@@ -39,21 +39,23 @@
   </main>
 
   <script>
-    const existUtilGDE = false;
-    window.addEventListener("tm-installed", () => {
-      console.log("UtilGDE detectado");
-      existUtilGDE = true;
-    });
-
+    var existUtilGDE = false;
     const estado = document.getElementById("statusUtilGDE");
     const ok = "UtilGDE está instalado."
     const nok = "UtilGDE no está instalado."
-    console.log( "Estado: " +  window.__UtilGDE__)
-    if (window.__UtilGDE__ || existUtilGDE ) {
+    
+    window.addEventListener("tm-installed", () => {
+      console.log("UtilGDE detectado");
+      existUtilGDE = true;
       estado.innerText = ok ;
       estado.classList.add("text-success");
       console.log(ok);
-    } else {
+    });
+
+    
+    
+    console.log( "Estado: " +  window.__UtilGDE__)
+    if (!existUtilGDE ) {
       estado.innerText = nok ;
       estado.classList.add("text-warning");
        estado.classList.add("pulse-theme");
