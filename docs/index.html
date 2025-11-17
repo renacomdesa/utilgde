@@ -38,12 +38,18 @@
     </div>
   </main>
 
-    <script>
+  <script>
+    const existUtilGDE = false;
+    window.addEventListener("tm-installed", () => {
+      console.log("UtilGDE detectado");
+      existUtilGDE = true;
+    });
+
     const estado = document.getElementById("statusUtilGDE");
     const ok = "UtilGDE está instalado."
     const nok = "UtilGDE no está instalado."
-     console.log( "Estado: " +  window.__UtilGDE__)
-    if (window.__UtilGDE__) {
+    console.log( "Estado: " +  window.__UtilGDE__)
+    if (window.__UtilGDE__ || existUtilGDE ) {
       estado.innerText = ok ;
       estado.classList.add("text-success");
       console.log(ok);
