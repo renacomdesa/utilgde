@@ -31,7 +31,7 @@
 
   <main class="center">
     <div class="d-flex justify-content-center align-items-center vh-100">
-      <div class="p-5 text-white rounded pulse-theme">
+      <div class="p-5 text-white rounded ">
         <h1 class="mb-0 text-primary">UtilGDE</h1>
         <h3 id="statusUtilGDE" >...</h3>
       </div>
@@ -49,6 +49,7 @@
     } else {
       estado.innerText = nok ;
       estado.classList.add("text-warning");
+       estado.classList.add("pulse-theme");
       console.log(nok);
     }
 </script>
