@@ -9,31 +9,32 @@
 </head>
 <body>
 <style>
-  .pulse {
+  .pulse-theme {
     background-color: var(--bs-secondary);
     width: 200px;
     height: 200px;
-    border-radius: 10px;
-    animation: pulse-bg 1.5s infinite ease-in-out;
+    border-radius: .5rem;
+    animation: pulseSecondary 1.6s infinite ease-in-out;
   }
 
-  @keyframes pulse-bg {
+  @keyframes pulseSecondary {
     0% {
-      background-color: var(--bs-secondary);
+      filter: brightness(100%);
     }
     50% {
-      background-color: rgba(108, 117, 125, 0.7); /* secondary con más luz */
+      filter: brightness(130%); /* Aclara sin cambiar el color base */
     }
     100% {
-      background-color: var(--bs-secondary);
+      filter: brightness(100%);
     }
   }
 </style>
 
 
+
   <main class="center">
     <div class="d-flex justify-content-center align-items-center vh-100">
-      <div class="p-5 bg-secondary text-white rounded pulse">
+      <div class="p-5 text-white rounded pulse-theme">
         <h1 class="mb-0 text-primary">UtilGDE</h1>
         <h3 id="statusUtilGDE" >...</h3>
       </div>
