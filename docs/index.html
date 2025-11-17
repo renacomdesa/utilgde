@@ -13,7 +13,7 @@
     <div class="d-flex justify-content-center align-items-center vh-100">
       <div class="p-5 bg-secondary text-white rounded">
         <h1 class="mb-0">UtilGDE</h1>
-        <h3 id="statusUtilGDE" class="center">...</h3>
+        <h3 id="statusUtilGDE" >...</h3>
       </div>
     </div>
   </main>
@@ -24,11 +24,11 @@
     const nok = "UtilGDE no está instalado."
     if (window.__UtilGDE__) {
       estado.innerText = ok ;
-      estado.class += " .text-success"
+      estado.class += " text-success"
       console.log(ok);
     } else {
       estado.innerText = nok ;
-      estado.class += " .text-warning"
+      estado.class += " text-warning"
       console.log(nok);
     }
 </script>
