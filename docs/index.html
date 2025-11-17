@@ -42,6 +42,7 @@
     const estado = document.getElementById("statusUtilGDE");
     const ok = "UtilGDE está instalado."
     const nok = "UtilGDE no está instalado."
+     console.log(  window.__UtilGDE__)
     if (window.__UtilGDE__) {
       estado.innerText = ok ;
       estado.classList.add("text-success");
