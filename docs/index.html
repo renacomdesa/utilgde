@@ -20,11 +20,11 @@
     const nok = "UtilGDE no está instalado."
     if (window.__UtilGDE__) {
       estado.innerText = ok ;
-      estado.style.color = "green";
+      estado.class += " .text-success"
       console.log(ok);
     } else {
       estado.innerText = nok ;
-      estado.style.color = "red";
+      estado.class += " .text-warning"
       console.log(nok);
     }
 </script>
