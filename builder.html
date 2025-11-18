@@ -1,0 +1,22 @@
+<textarea id="input" rows="10" cols="80">
+<!DOCTYPE html>
+<html>
+<body>
+<h1>Hola</h1>
+</body>
+</html>
+</textarea>
+
+<br>
+<button onclick="build()">Generar URL</button>
+
+<p>URL generada:</p>
+<textarea id="out" rows="6" cols="80"></textarea>
+
+<script>
+function build() {
+  const html = document.getElementById("input").value;
+  const encoded = encodeURIComponent(html);
+  document.getElementById("out").value = `data:text/html,${encoded}`;
+}
+</script>
