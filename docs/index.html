@@ -168,9 +168,11 @@ JSONEditor.defaults.options.display_required_only = false;
 /*******************************************************
  * 4) Cargar schema con persistencia por clave
  *******************************************************/
+
+const prefix_data = "utilGDE_data_"
 function loadSchema(key) {
     currentSchemaKey = key;
-    const prefix_data = "utilGDE_data_"
+    
     document.getElementById("currentSchemaName").textContent = schemas[key].title || key;
 
     // Recuperar datos guardados
@@ -210,8 +212,16 @@ function loadSchema(key) {
 document.getElementById("btnDownload").onclick = () => {
     if (!editor) return;
 
+    var data_saved = []
+    Object.keys(schemas).forEach(key => {
+        const raw = localStorage.getItem(prefix_data + key);
+        if (raw) {
+                data_saved.push({  [key] : JSON.parse(raw) })
+              }
+        })
+
     const data = editor.getValue();
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
+    const blob = new Blob([JSON.stringify(data_saved, null, 2)], {
         type: "application/json"
     });
     const url = URL.createObjectURL(blob);
