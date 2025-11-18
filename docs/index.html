@@ -42,7 +42,7 @@
         <!-- Selección del schema -->
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="schemaMenu" role="button" data-bs-toggle="dropdown">
-            Schemas
+            Configuraciones
           </a>
           <ul class="dropdown-menu" id="schemaList">
             <!-- Se llenará por JS -->
@@ -65,7 +65,7 @@
 <!-- PANEL DEL EDITOR -->
 <div id="editorPanel" class="card border-primary bg-dark text-light shadow">
     <div class="card-header bg-primary text-white fw-bold">
-        Editando <span id="currentSchemaName"></span>
+        Editando configuración de <span id="currentSchemaName"></span>
     </div>
 
     <div id="editorHolder" class="card-body bg-light text-dark" style="min-height:300px;">
@@ -79,43 +79,62 @@
  * 1) Definición de múltiples schemas
  *******************************************************/
 const schemas = {
-    perfil: {
-        title: "Perfil",
+    usuario: {
+        title: "Usuario",
         type: "object",
         properties: {
             nombre: { type: "string" },
-            edad: { type: "number" },
-            activo: { type: "boolean" },
-            notas: { type: "string" }
+            apellido: { type: "string" },
+            cuil: { type: "number" },
+            usuario_gde: { type: "string" },
         }
     },
 
-    direccion: {
-        title: "Dirección",
+    domicilio: {
+        title: "Domicilio",
         type: "object",
         properties: {
             calle: { type: "string" },
-            numero: { type: "number" },
-            ciudad: { type: "string" },
-            pais: { type: "string" }
+            numero: { type: "string" },
+            piso: { type: "string" },
+            departamento: { type: "string" },
+            localidad: { type: "string" },
+            telefono: { type: "string" },
         }
     },
 
-    configuracion: {
-        title: "Configuración",
+    datos_revista: {
+        title: "Situación de revista",
         type: "object",
         properties: {
-            tema: {
-                type: "string",
-                enum: ["claro", "oscuro", "sistema"]
-            },
-            notificaciones: { type: "boolean" },
-            refresco: {
-                type: "number",
-                description: "Tiempo en segundos"
-            }
+            convenio: { type: "string",
+                "enum": [
+                    "SINEP",
+                    "Contrato 1421/2",
+                    "Extraescalafonario",
+                    "Planta Transitoria",
+                    "Designación Transitoria",
+                    "Convenio 973: Orquestas, Coros y Ballets Nacionales",
+                    "Convenio 1133/09",
+                    "Convenio 2539/15 Personal Civil y Docente Civil de las Fuerzas Armadas y de Seguridad",
+                    "Otros"
+                ]
+             },
+            reparticion: { type: "string" },
+        }
+    },
+
+    fsoli: {
+        title: "Datos FSOLI",
+        type: "object",
+        properties: {
+            destinatarios: { type: "string" },
+            cc: { type: "string" },
+            cco: { type: "string" }
         }
     }
+
+    
 };
 
 /*******************************************************
@@ -126,9 +145,10 @@ const schemaList = document.getElementById("schemaList");
 Object.keys(schemas).forEach(key => {
     const li = document.createElement("li");
     const a = document.createElement("a");
+    console.log( schemas[key] )
     a.className = "dropdown-item";
     a.href = "#";
-    a.textContent = key;
+    a.textContent = schemas[key].title  || key;
     a.onclick = () => loadSchema(key);
     li.appendChild(a);
     schemaList.appendChild(li);
@@ -150,10 +170,11 @@ JSONEditor.defaults.options.display_required_only = false;
  *******************************************************/
 function loadSchema(key) {
     currentSchemaKey = key;
-    document.getElementById("currentSchemaName").textContent = key;
+    const prefix_data = "utilGDE_data_"
+    document.getElementById("currentSchemaName").textContent = schemas[key].title || key;
 
     // Recuperar datos guardados
-    const raw = localStorage.getItem("jsonEditorData_" + key);
+    const raw = localStorage.getItem(prefix_data + key);
     let startval = null;
     if (raw) {
         try { startval = JSON.parse(raw); }
@@ -176,7 +197,7 @@ function loadSchema(key) {
     // Guardado automático
     editor.on("change", () => {
         localStorage.setItem(
-            "jsonEditorData_" + key,
+            prefix_data + key,
             JSON.stringify(editor.getValue())
         );
     });
