@@ -14,6 +14,10 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- sjcl -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sjcl/1.0.8/sjcl.js"></script>
+
+
 <style>
     body {
         background: #1a1c1e;
@@ -53,6 +57,7 @@
 
       <!-- Botones -->
       <div class="d-flex">
+        <button id="btnSave" class="btn btn-primary me-2">💾 Guardar</button>
         <button id="btnDownload" class="btn btn-info me-2">📥 Descargar</button>
         <button id="btnReset" class="btn btn-danger">♻ Resetear</button>
       </div>
@@ -72,6 +77,32 @@
         <!-- JSON Editor se monta aquí -->
     </div>
 </div>
+
+<!-- Modal para ingresar clave -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">Clave requerida</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <label for="passwordInput" class="form-label">Ingrese la clave:</label>
+        <input type="password" id="passwordInput" class="form-control">
+        <div id="passwordError" class="text-danger mt-2 d-none">
+          Debe ingresar una clave.
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" id="passwordConfirmBtn" class="btn btn-info">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 <script>
@@ -155,6 +186,33 @@ Object.keys(schemas).forEach(key => {
 });
 
 
+function decryptLocalStorage( solicitarClave = false) {
+    var data_saved = null;
+    console.log( "Solicitar clave: ", solicitarClave);
+    if ( solicitarClave || localStorage.getItem(prefix_data) !== null  ) {
+        pedirClave().then(password => {
+            console.log( password )
+            if (!password) return "";  // por si cancela
+            try {
+                const encrypted = localStorage.getItem(prefix_data);
+                if( password != 'pwd'){
+                    data_saved = sjcl.decrypt(password, encrypted);
+                } else {
+                    data_saved = encrypted;
+                }   
+            } catch (err) {
+                alert("Clave incorrecta o datos corruptos.");
+            }
+        })
+    } else {
+      console.log( "Datos GDE vacío");
+    };   
+    return data_saved
+};
+
+
+
+
 /*******************************************************
  * 3) Variables del editor
  *******************************************************/
@@ -165,71 +223,109 @@ JSONEditor.defaults.options.theme = "bootstrap5";
 JSONEditor.defaults.options.disable_edit_json = true;
 JSONEditor.defaults.options.disable_properties = true;
 JSONEditor.defaults.options.display_required_only = false;
+
+
 /*******************************************************
  * 4) Cargar schema con persistencia por clave
  *******************************************************/
 
 const prefix_data = "utilGDE_data_"
+let allValues = {}
+let oldKey = ""
+
 function loadSchema(key) {
     currentSchemaKey = key;
     
     document.getElementById("currentSchemaName").textContent = schemas[key].title || key;
 
-    // Recuperar datos guardados
-    const raw = localStorage.getItem(prefix_data + key);
+    //const raw = decryptLocalStorage();
+
     let startval = null;
     if (raw) {
-        try { startval = JSON.parse(raw); }
+        try {
+            allValues = JSON.parse(raw); 
+            startval =  allValues[key]
+        }
         catch { startval = null; }
     }
 
     // Destruir editor previo
     if (editor) {
+        if( oldKey != "")
+            allValues[oldKey] = editor.getValue() ?? {} ;
+        console.log( JSON.stringify( allValues ));
         editor.destroy();
         editor = null;
     }
 
     // Crear editor nuevo
+    oldKey = key;
     editor = new JSONEditor(document.getElementById("editorHolder"), {
         schema: schemas[key],
-        startval: startval ?? undefined,
+        startval: allValues[key] ?? undefined,
         required_by_default : true
         });
 
-    // Guardado automático
+    // Guardado automático 
+    /*
     editor.on("change", () => {
         localStorage.setItem(
             prefix_data + key,
             JSON.stringify(editor.getValue())
         );
-    });
-}
+    });*/
+};
+
+
+
 
 
 /*******************************************************
- * 5) Botón Descargar
+ * 5a) Botón Guardar
+  *******************************************************/
+document.getElementById("btnSave").onclick = () => {
+    
+        pedirClave(true).then(password => {
+            if (!password) return;  // por si cancela
+
+            //TODO: recolectar todos los valores 
+            //const rawJson = JSON.stringify(editor.getValue());
+            const rawJson = JSON.stringify(allValues);
+
+            // Cifrado con SJCL (AES+PBKDF2+CCM)
+            const encrypted = sjcl.encrypt(password, rawJson, {
+                ks: 256,      // tamaño de clave 256 bits
+                iter: 100000  // iterations PBKDF2
+            });
+
+            //localStorage.setItem(prefix_data , encrypted);
+            //localStorage.setItem(prefix_data + "_savedAt", new Date().toISOString());
+
+            localStorage.setItem(prefix_data , rawJson)
+    });
+};
+
+
+/*******************************************************
+ * 5b) Botón Descargar
  *******************************************************/
 document.getElementById("btnDownload").onclick = () => {
-    if (!editor) return;
+    //if (!editor) return;
 
-    var data_saved = []
-    Object.keys(schemas).forEach(key => {
-        const raw = localStorage.getItem(prefix_data + key);
-        if (raw) {
-                data_saved.push({  [key] : JSON.parse(raw) })
-              }
-        })
+    var data_saved = decryptLocalStorage(true);
+    console.log( "Descarga" , data_saved )
 
-    const data = editor.getValue();
-    const blob = new Blob([JSON.stringify(data_saved, null, 2)], {
+    if( data_saved != null ){
+        const blob = new Blob([JSON.stringify(data_saved, null, 2)], {
         type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = currentSchemaKey + ".json";
-    a.click();
-    URL.revokeObjectURL(url);
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = prefix_data + ".json";
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 };
 
 
@@ -237,19 +333,64 @@ document.getElementById("btnDownload").onclick = () => {
  * 6) Botón Reset
  *******************************************************/
 document.getElementById("btnReset").onclick = () => {
-    if (!currentSchemaKey || !editor) return;
-
-    if (confirm("¿Seguro que deseas borrar los datos del schema '" + currentSchemaKey + "'?")) {
-        localStorage.removeItem("jsonEditorData_" + currentSchemaKey);
-        editor.setValue({});
+    try {
+        const ok = confirm("¿Seguro que deseas borrar los datos?");
+        if (ok) {
+            localStorage.removeItem(prefix_data);
+            editor.setValue({});
+            alert("Datos eliminados");
+        }
+    } catch (error) {
+        console.error("No se puede borrar", error);
     }
 };
+  
 
+/*******************************************************
+ * 8) Funciones auxiliares 
+ *******************************************************/
+function pedirClave() {
+    return new Promise(resolve => {
+        const modalEl = document.getElementById("passwordModal");
+        const input = document.getElementById("passwordInput");
+        const error = document.getElementById("passwordError");
+        const confirmBtn = document.getElementById("passwordConfirmBtn");
+
+        // Reset
+        input.value = "";
+        error.classList.add("d-none");
+
+        // Crear instancia del modal
+        const modal = new bootstrap.Modal(modalEl);
+
+        // Evento al confirmar
+        confirmBtn.onclick = () => {
+            const value = input.value.trim();
+            if (!value) {
+                error.classList.remove("d-none");
+                return;
+            }
+            modal.hide();        // cerrar modal
+            resolve(value);      // devolver clave
+        };
+
+        modal.show();
+    });
+}
 
 /*******************************************************
  * 7) Cargar el primer schema automáticamente
  *******************************************************/
+const raw = decryptLocalStorage();
+if (raw) {
+    try {
+        allValues = JSON.parse(raw); 
+    }
+    catch { startval = null; }
+}
+
 loadSchema(Object.keys(schemas)[0]);
+
 </script>
 
 </body>
